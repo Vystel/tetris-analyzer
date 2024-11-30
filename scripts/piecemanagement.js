@@ -49,34 +49,61 @@ function slidePiece(piece, dropX, dropY, rotation, processedMoves) {
     let offsetX = dropX;
     let offsetY = dropY;
 
-    // Process the original position if not already processed
+    // Process the original position if not already processed and supported
     const originalMoveKey = `${offsetX},${offsetY},${rotation}`;
-    if (!processedMoves.has(originalMoveKey)) {
+    if (!processedMoves.has(originalMoveKey) && isPieceSupported(piece, offsetX, offsetY)) {
         processMove(piece, offsetX, offsetY, rotation);
         processedMoves.add(originalMoveKey);  // Mark the original position as processed
     }
 
-    // Check and slide the piece left until collision is detected
+    // Check and slide the piece left until collision is detected and it's supported
     while (offsetX > 0 && !checkCollision(piece, offsetX - 1, offsetY)) {
         offsetX--;
-        const moveKey = `${offsetX},${offsetY},${rotation}`;
-        if (!processedMoves.has(moveKey)) {
-            processMove(piece, offsetX, offsetY, rotation);
-            processedMoves.add(moveKey);  // Mark this move as processed
+        if (isPieceSupported(piece, offsetX, offsetY)) {
+            const moveKey = `${offsetX},${offsetY},${rotation}`;
+            if (!processedMoves.has(moveKey)) {
+                processMove(piece, offsetX, offsetY, rotation);
+                processedMoves.add(moveKey);  // Mark this move as processed
+            }
+        } else {
+            break;  // Stop sliding left if the piece becomes unsupported
         }
     }
 
-    // Check and slide the piece right until collision is detected
-    offsetX = dropX;  // reset to the original dropX
+    // Check and slide the piece right until collision is detected and it's supported
+    offsetX = dropX;  // Reset to the original dropX
     while (offsetX < 10 - piece[0].length && !checkCollision(piece, offsetX + 1, offsetY)) {
         offsetX++;
-        const moveKey = `${offsetX},${offsetY},${rotation}`;
-        if (!processedMoves.has(moveKey)) {
-            processMove(piece, offsetX, offsetY, rotation);
-            processedMoves.add(moveKey);  // Mark this move as processed
+        if (isPieceSupported(piece, offsetX, offsetY)) {
+            const moveKey = `${offsetX},${offsetY},${rotation}`;
+            if (!processedMoves.has(moveKey)) {
+                processMove(piece, offsetX, offsetY, rotation);
+                processedMoves.add(moveKey);  // Mark this move as processed
+            }
+        } else {
+            break;  // Stop sliding right if the piece becomes unsupported
         }
     }
 }
+
+// Helper function to check if the piece is supported (i.e., not floating)
+function isPieceSupported(piece, offsetX, offsetY) {
+    for (let y = 0; y < piece.length; y++) {
+        for (let x = 0; x < piece[y].length; x++) {
+            if (piece[y][x] === 1) {
+                const boardX = offsetX + x;
+                const boardY = offsetY + y;
+
+                // Check if the piece is on the bottom row or on another block
+                if (boardY === 19 || boardState[boardY + 1] && boardState[boardY + 1][boardX] === 1) {
+                    return true;  // Supported if it's on the bottom or another block
+                }
+            }
+        }
+    }
+    return false;  // Not supported (floating)
+}
+
 
 // Places a piece permanently on the board
 function placePiece(piece, offsetX, offsetY) {
