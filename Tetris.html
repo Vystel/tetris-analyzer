@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tetris AI</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="game-container">
+        <div id="board"></div>
+        <div class="controls">
+            <div class="piece-selection">
+                <button onclick="selectPiece('I')">I Piece</button>
+                <button onclick="selectPiece('O')">O Piece</button>
+                <button onclick="selectPiece('T')">T Piece</button>
+                <button onclick="selectPiece('S')">S Piece</button>
+                <button onclick="selectPiece('Z')">Z Piece</button>
+                <button onclick="selectPiece('J')">J Piece</button>
+                <button onclick="selectPiece('L')">L Piece</button>
+            </div>
+            <div class="navigation">
+                <button onclick="previousMove()">Previous Move</button>
+                <button onclick="nextMove()">Next Move</button>
+            </div>
+            <div class="info">
+                <p>Current Piece: <span id="current-piece">None</span></p>
+                <p>Current Move: <span id="current-move">0</span></p>
+                <p><span id="score">N/A</span></p>
+                <p>Pieces Placed: <span id="pieces-placed">0</span></p>
+            </div>
+            <button class="confirm-button" onclick="confirmMove()">Confirm Move</button>
+            <label>
+                <input type="checkbox" id="autoPlayMode"> Auto Play Mode
+            </label>   
+            <label>        
+                <input type="checkbox" id="quickPlace"> Quick Place
+            </label>  
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
