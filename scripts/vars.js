@@ -43,7 +43,7 @@ const multipliers = {
 
 const mutationRate = 1; // How much weights can change during evolution mutation
 
-let lookAheadAmount = 1;
+let lookAheadDepth = 2;
 
 //  ------------------- GAME STATE ------------------- //
 

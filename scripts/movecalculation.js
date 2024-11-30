@@ -12,11 +12,19 @@ function generateMovesForCurrentPiece() {
     const pieceName = currentPieceLabel.textContent;
     const maxRotations = getMaxRotations(pieceName);
 
+    // Use a set to track processed (offsetX, offsetY, rotation) combinations
+    const processedMoves = new Set();
+
     for (let rotation = 0; rotation < maxRotations; rotation++) {
         const rotatedPiece = rotatePiece(selectedPiece, rotation);
 
+        // Calculate the drop height for the piece first
         for (let x = 0; x <= 10 - rotatedPiece[0].length; x++) {
-            processMove(rotatedPiece, x, rotation);
+            const offsetY = getDropHeight(rotatedPiece, x);
+            if (offsetY < 0) continue; // No valid drop height, skip
+
+            // Try sliding the piece left or right after calculating its drop height
+            slidePiece(rotatedPiece, x, offsetY, rotation, processedMoves);
         }
     }
 }
@@ -29,10 +37,7 @@ function getMaxRotations(pieceName) {
 }
 
 // Process a single move by simulating the board state
-function processMove(piece, offsetX, rotation) {
-    const offsetY = getDropHeight(piece, offsetX);
-    if (offsetY < 0) return;
-
+function processMove(piece, offsetX, offsetY, rotation) {
     const tempBoard = copyBoard(boardState);
     const linesCleared = placePieceOnBoard(piece, offsetX, offsetY, tempBoard);
 
@@ -53,25 +58,27 @@ function processMove(piece, offsetX, rotation) {
 // Calculate the score for a move
 function calculateMoveScore(board, linesCleared) {
     const immediateScore = calculateBoardScore(board, linesCleared);
-    const lookAheadScore = calculateLookAheadScore(board);
+    const lookAheadScore = calculateLookAheadScore(board, 1, lookAheadDepth);  // Start with depth 1
     return (immediateScore + lookAheadScore / 2);
 }
 
-// Helper function to create a deep copy of the board state
-function copyBoard(board) {
-    return board.map(row => row.slice());
-}
+// Evaluates future possible moves based on the given lookAheadDepth
+function calculateLookAheadScore(tempBoard, currentDepth, maxDepth) {
+    if (currentDepth >= maxDepth) {
+        return 0; // Stop recursion at max depth
+    }
 
-// Evaluates future possible moves
-function calculateLookAheadScore(tempBoard) {
-    const pieces = Object.keys(PIECES);
     let totalBestScore = 0;
     let piecesEvaluated = 0;
+
+    const pieces = Object.keys(PIECES);
 
     for (let pieceName of pieces) {
         const piece = PIECES[pieceName];
         const maxRotations = getMaxRotations(pieceName);
-        const bestScoreForPiece = evaluatePieceLookAhead(tempBoard, piece, maxRotations);
+
+        // Evaluate the best move for this piece considering future moves
+        const bestScoreForPiece = evaluatePieceLookAhead(tempBoard, piece, maxRotations, currentDepth, maxDepth);
 
         totalBestScore += bestScoreForPiece;
         piecesEvaluated++;
@@ -80,8 +87,8 @@ function calculateLookAheadScore(tempBoard) {
     return totalBestScore / piecesEvaluated;
 }
 
-// Evaluate the best possible score for a given piece and its rotations
-function evaluatePieceLookAhead(tempBoard, piece, maxRotations) {
+// Evaluate the best possible score for a given piece and its rotations considering future moves
+function evaluatePieceLookAhead(tempBoard, piece, maxRotations, currentDepth, maxDepth) {
     let bestScore = Infinity;
 
     for (let rotation = 0; rotation < maxRotations; rotation++) {
@@ -95,11 +102,22 @@ function evaluatePieceLookAhead(tempBoard, piece, maxRotations) {
             const linesCleared = placePieceOnBoard(rotatedPiece, x, offsetY, lookAheadBoard);
             const moveScore = calculateBoardScore(lookAheadBoard, linesCleared);
 
-            bestScore = Math.min(bestScore, moveScore);
+            // Evaluate future moves by recursively calling calculateLookAheadScore
+            const futureScore = calculateLookAheadScore(lookAheadBoard, currentDepth + 1, maxDepth);
+
+            // Combine the current move score and the future evaluation
+            const totalScore = moveScore + futureScore;
+
+            bestScore = Math.min(bestScore, totalScore);
         }
     }
 
     return bestScore;
+}
+
+// Helper function to create a deep copy of the board state
+function copyBoard(board) {
+    return board.map(row => row.slice());
 }
 
 

@@ -44,6 +44,40 @@ function getDropHeight(piece, offsetX) {
     return 20 - piece.length;
 }
 
+// Function to attempt sliding the piece left or right after determining drop height
+function slidePiece(piece, dropX, dropY, rotation, processedMoves) {
+    let offsetX = dropX;
+    let offsetY = dropY;
+
+    // Process the original position if not already processed
+    const originalMoveKey = `${offsetX},${offsetY},${rotation}`;
+    if (!processedMoves.has(originalMoveKey)) {
+        processMove(piece, offsetX, offsetY, rotation);
+        processedMoves.add(originalMoveKey);  // Mark the original position as processed
+    }
+
+    // Check and slide the piece left until collision is detected
+    while (offsetX > 0 && !checkCollision(piece, offsetX - 1, offsetY)) {
+        offsetX--;
+        const moveKey = `${offsetX},${offsetY},${rotation}`;
+        if (!processedMoves.has(moveKey)) {
+            processMove(piece, offsetX, offsetY, rotation);
+            processedMoves.add(moveKey);  // Mark this move as processed
+        }
+    }
+
+    // Check and slide the piece right until collision is detected
+    offsetX = dropX;  // reset to the original dropX
+    while (offsetX < 10 - piece[0].length && !checkCollision(piece, offsetX + 1, offsetY)) {
+        offsetX++;
+        const moveKey = `${offsetX},${offsetY},${rotation}`;
+        if (!processedMoves.has(moveKey)) {
+            processMove(piece, offsetX, offsetY, rotation);
+            processedMoves.add(moveKey);  // Mark this move as processed
+        }
+    }
+}
+
 // Places a piece permanently on the board
 function placePiece(piece, offsetX, offsetY) {
 
