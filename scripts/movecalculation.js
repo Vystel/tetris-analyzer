@@ -1,94 +1,107 @@
-// Generates all possible moves for the current piece and returns a score
+// Main function to calculate moves
 function calculateMoves() {
     moves = [];
-    if (!selectedPiece) {
-        const tempBoard = boardState.map(row => row.slice());
-        const immediateScore = calculateBoardScore(tempBoard, 0); 
-        const lookAheadScore = calculateLookAheadScore(tempBoard);
-        const averageLookAheadScore = (immediateScore + lookAheadScore / 2);
-        
-        moves.push({
-            score: averageLookAheadScore,
-            gaps: calculateGapsOnTempBoard(tempBoard),
-            bumpiness: calculateBumpinessOnTempBoard(tempBoard),
-            heightPenalty: calculateHeightPenalty(tempBoard),
-            iDependencies: calculateIDependenciesOnTempBoard(tempBoard)
-        });
-
-        moves.sort((a, b) => a.score - b.score);
-        currentMove = 0;
-        displayCurrentMove();
-        return;
-    }
-
-    const pieceName = currentPieceLabel.textContent;
-    let maxRotations = pieceName === 'O' ? 1 : pieceName === 'I' || pieceName === 'Z' || pieceName === 'S' ? 2 : 4;
-
-    for (let rotation = 0; rotation < maxRotations; rotation++) {
-        const rotatedPiece = rotatePiece(selectedPiece, rotation);
-        const pieceWidth = rotatedPiece[0].length;
-
-        for (let x = 0; x <= 10 - pieceWidth; x++) {
-            const offsetY = getDropHeight(rotatedPiece, x);
-            if (offsetY < 0) continue;
-
-            const tempBoard = boardState.map(row => row.slice());
-            const linesCleared = placePieceOnBoard(rotatedPiece, x, offsetY, tempBoard);
-
-            const immediateScore = calculateBoardScore(tempBoard, linesCleared);
-            const lookAheadScore = calculateLookAheadScore(tempBoard);
-            const averageLookAheadScore = (immediateScore + lookAheadScore / 2);
-
-            moves.push({
-                rotation,
-                offsetX: x,
-                offsetY,
-                score: averageLookAheadScore,
-                gaps: calculateGapsOnTempBoard(tempBoard),
-                bumpiness: calculateBumpinessOnTempBoard(tempBoard),
-                lineClears: linesCleared,
-                heightPenalty: calculateHeightPenalty(tempBoard),
-                iDependencies: calculateIDependenciesOnTempBoard(tempBoard)
-            });
-        }
-    }
+    generateMovesForCurrentPiece();
     moves.sort((a, b) => a.score - b.score);
     currentMove = 0;
     displayCurrentMove();
 }
 
+// Generate all possible moves for the currently selected piece
+function generateMovesForCurrentPiece() {
+    const pieceName = currentPieceLabel.textContent;
+    const maxRotations = getMaxRotations(pieceName);
+
+    for (let rotation = 0; rotation < maxRotations; rotation++) {
+        const rotatedPiece = rotatePiece(selectedPiece, rotation);
+
+        for (let x = 0; x <= 10 - rotatedPiece[0].length; x++) {
+            processMove(rotatedPiece, x, rotation);
+        }
+    }
+}
+
+// Determine the maximum number of rotations for a piece
+function getMaxRotations(pieceName) {
+    if (pieceName === 'O') return 1;
+    if (['I', 'Z', 'S'].includes(pieceName)) return 2;
+    return 4;
+}
+
+// Process a single move by simulating the board state
+function processMove(piece, offsetX, rotation) {
+    const offsetY = getDropHeight(piece, offsetX);
+    if (offsetY < 0) return;
+
+    const tempBoard = copyBoard(boardState);
+    const linesCleared = placePieceOnBoard(piece, offsetX, offsetY, tempBoard);
+
+    const moveScore = calculateMoveScore(tempBoard, linesCleared);
+    moves.push({
+        rotation,
+        offsetX,
+        offsetY,
+        score: moveScore,
+        gaps: calculateGapsOnTempBoard(tempBoard),
+        bumpiness: calculateBumpinessOnTempBoard(tempBoard),
+        lineClears: linesCleared,
+        heightPenalty: calculateHeightPenalty(tempBoard),
+        iDependencies: calculateIDependenciesOnTempBoard(tempBoard)
+    });
+}
+
+// Calculate the score for a move
+function calculateMoveScore(board, linesCleared) {
+    const immediateScore = calculateBoardScore(board, linesCleared);
+    const lookAheadScore = calculateLookAheadScore(board);
+    return (immediateScore + lookAheadScore / 2);
+}
+
+// Helper function to create a deep copy of the board state
+function copyBoard(board) {
+    return board.map(row => row.slice());
+}
 
 // Evaluates future possible moves
 function calculateLookAheadScore(tempBoard) {
     const pieces = Object.keys(PIECES);
     let totalBestScore = 0;
     let piecesEvaluated = 0;
-    
+
     for (let pieceName of pieces) {
         const piece = PIECES[pieceName];
-        let bestScoreForPiece = Infinity;
-        let maxRotations = pieceName === 'O' ? 1 : pieceName === 'I' || pieceName === 'Z' || pieceName === 'S' ? 2 : 4;
-        
-        for (let rotation = 0; rotation < maxRotations; rotation++) {
-            const rotatedPiece = rotatePiece(piece, rotation);
-            const pieceWidth = rotatedPiece[0].length;
-            
-            for (let x = 0; x <= 10 - pieceWidth; x++) {
-                const offsetY = getDropHeight(rotatedPiece, x);
-                if (offsetY < 0) continue;
-                
-                const lookAheadBoard = tempBoard.map(row => row.slice()); 
-                const linesCleared = placePieceOnBoard(rotatedPiece, x, offsetY, lookAheadBoard); 
-                
-                const lookAheadMoveScore = calculateBoardScore(lookAheadBoard, linesCleared);
-                bestScoreForPiece = Math.min(bestScoreForPiece, lookAheadMoveScore);
-            }
-        }
+        const maxRotations = getMaxRotations(pieceName);
+        const bestScoreForPiece = evaluatePieceLookAhead(tempBoard, piece, maxRotations);
+
         totalBestScore += bestScoreForPiece;
         piecesEvaluated++;
     }
+
     return totalBestScore / piecesEvaluated;
 }
+
+// Evaluate the best possible score for a given piece and its rotations
+function evaluatePieceLookAhead(tempBoard, piece, maxRotations) {
+    let bestScore = Infinity;
+
+    for (let rotation = 0; rotation < maxRotations; rotation++) {
+        const rotatedPiece = rotatePiece(piece, rotation);
+
+        for (let x = 0; x <= 10 - rotatedPiece[0].length; x++) {
+            const offsetY = getDropHeight(rotatedPiece, x);
+            if (offsetY < 0) continue;
+
+            const lookAheadBoard = copyBoard(tempBoard);
+            const linesCleared = placePieceOnBoard(rotatedPiece, x, offsetY, lookAheadBoard);
+            const moveScore = calculateBoardScore(lookAheadBoard, linesCleared);
+
+            bestScore = Math.min(bestScore, moveScore);
+        }
+    }
+
+    return bestScore;
+}
+
 
 // Updates board state with new piece
 function placePieceOnBoard(piece, offsetX, offsetY, board) {
@@ -127,7 +140,7 @@ function calculateBoardScore(board, linesCleared) {
     const iDependencies = calculateIDependenciesOnTempBoard(board);
     
     // Always use currentWeights when auto play is enabled
-    const weights = document.getElementById('autoPlayMode').checked ? currentWeights : initialWeights;
+    const weights = document.getElementById('autoPlayMode').checked ? currentWeights : multipliers;
     
     return gaps * weights.gaps + 
            bumpiness * weights.bumpiness + 

@@ -33,7 +33,7 @@ const PIECE_COLORS = {
 };
 
 // AI evaluation parameter multipliers
-const initialWeights = { 
+const multipliers = { 
     gaps: 1.22,
     bumpiness: 0.18,
     lineClears: -0.13,
@@ -43,7 +43,7 @@ const initialWeights = {
 
 const mutationRate = 1; // How much weights can change during evolution mutation
 
-
+let lookAheadAmount = 1;
 
 //  ------------------- GAME STATE ------------------- //
 
@@ -72,8 +72,8 @@ let pieceIndex = 0; // Current piece in sequence
 let isEvolutionRunning = false; // Evolution mode status
 let gameStats = []; // Historical game performance data during evolution
 let bestScore = Infinity; // Best performance achieved during evolution
-let bestWeights = { ...initialWeights }; // Best performing AI parameters during evolution
-let currentWeights = { ...initialWeights }; // Current AI evaluation parameters
+let bestWeights = { ...multipliers }; // Best performing AI parameters during evolution
+let currentWeights = { ...multipliers }; // Current AI evaluation parameters
 let currentGamePieces = 0; // Pieces placed in current evolution game
 let currentHeightPenalties = []; // Height penalties for current evolution game
 

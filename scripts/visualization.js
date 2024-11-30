@@ -45,7 +45,7 @@ function renderTopGamesChart() {
 
     // Prepare data for the chart
     const labels = topGames.map(game => game.score.toFixed(2)); // Use scores as X-axis labels
-    const datasets = Object.keys(initialWeights).map(weightKey => ({
+    const datasets = Object.keys(multipliers).map(weightKey => ({
         label: weightKey,
         data: topGames.map(game => game.weights[weightKey]),
         fill: false,

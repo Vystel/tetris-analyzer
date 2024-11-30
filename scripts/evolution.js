@@ -2,8 +2,8 @@
 function startEvolution() {
     isEvolutionRunning = true;
     document.getElementById('autoPlayMode').checked = true;
-    currentWeights = { ...initialWeights };
-    bestWeights = { ...initialWeights };
+    currentWeights = { ...multipliers };
+    bestWeights = { ...multipliers };
     document.getElementById('current-weights').textContent = JSON.stringify(currentWeights, null, 2);
     document.getElementById('best-weights').textContent = JSON.stringify(bestWeights, null, 2);
     startNewGame();
