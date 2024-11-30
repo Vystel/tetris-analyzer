@@ -28,6 +28,7 @@ let currentMove = 0;
 let piecesPlaced = 0;
 let moves = [];
 const boardState = Array(20).fill().map(() => Array(10).fill(0));
+let historyStack = [];
 
 function initBoard() {
     for (let i = 0; i < 200; i++) {
@@ -50,7 +51,7 @@ function clearBoard() {
     Array.from(board.children).forEach(cell => cell.style.backgroundColor = '#444');
 }
 
-function drawPiece(piece, offsetX, offsetY) {
+function drawPiece(piece, offsetX, offsetY, preview = true) {
     clearBoard();
     renderBoard();
     piece.forEach((row, y) => {
@@ -58,12 +59,13 @@ function drawPiece(piece, offsetX, offsetY) {
             if (cell === 1) {
                 const index = (offsetY + y) * 10 + (offsetX + x);
                 if (index >= 0 && index < 200) {
-                    board.children[index].style.backgroundColor = '#fff';
+                    board.children[index].style.backgroundColor = preview ? '#888' : '#fff';
                 }
             }
         });
     });
 }
+
 
 function selectPiece(pieceName) {
     selectedPiece = PIECES[pieceName];
@@ -80,52 +82,32 @@ function selectPiece(pieceName) {
 function calculateMoves() {
     moves = [];
     const pieceName = currentPieceLabel.textContent;
-    let maxRotations;
+    let maxRotations = pieceName === 'O' ? 1 : pieceName === 'I' || pieceName === 'Z' || pieceName === 'S' ? 2 : 4;
 
-    // Set the number of rotations based on piece type
-    if (pieceName === 'O') {
-        maxRotations = 1;
-    } else if (pieceName === 'I' || pieceName === 'Z' || pieceName === 'S') {
-        maxRotations = 2;
-    } else {
-        maxRotations = 4;
-    }
-
-    // Calculate all moves for each rotation
     for (let rotation = 0; rotation < maxRotations; rotation++) {
         const rotatedPiece = rotatePiece(selectedPiece, rotation);
         const pieceWidth = rotatedPiece[0].length;
+
         for (let x = 0; x <= 10 - pieceWidth; x++) {
-            let offsetY = getDropHeight(rotatedPiece, x);
+            const offsetY = getDropHeight(rotatedPiece, x);
+            const tempBoard = boardState.map(row => row.slice()); // Copy the board state
 
-            // Make a copy of the board to simulate placing the piece
-            const tempBoard = boardState.map(row => row.slice());
-
-            // Place the piece on the temporary board
-            rotatedPiece.forEach((row, y) => {
-                row.forEach((cell, cellX) => {
-                    if (cell === 1) {
-                        tempBoard[offsetY + y][x + cellX] = 1;
-                    }
-                });
-            });
-
-            // Clear lines in the temporary board
-            const linesCleared = clearFullLinesOnTempBoard(tempBoard);
-
-            // Calculate gaps, bumpiness, height bonus, and I-Dependency on the updated board
+            const linesCleared = placePieceOnBoard(rotatedPiece, x, offsetY, tempBoard);
             const gaps = calculateGapsOnTempBoard(tempBoard);
             const bumpiness = calculateBumpinessOnTempBoard(tempBoard);
-            const heightPenalty = calculateheightPenalty(offsetY);
+            const heightPenalty = calculateHeightPenalty(tempBoard);
+
             const iDependencies = calculateIDependenciesOnTempBoard(tempBoard);
 
-            const score = (gaps * 2.0 + bumpiness * 0.5 - linesCleared * 0.5 + heightPenalty * 1) + iDependencies * 5.0;
+            const immediateScore = (gaps * 1.5 + bumpiness * 0.1 - linesCleared * 0.5 + heightPenalty * 1) + iDependencies * 2.5;
+            const lookAheadScore = calculateLookAheadScore(tempBoard);
+            const averageLookAheadScore = (immediateScore + lookAheadScore / 2);
 
             moves.push({
                 rotation,
                 offsetX: x,
                 offsetY,
-                score,
+                score: averageLookAheadScore,
                 gaps,
                 bumpiness,
                 lineClears: linesCleared,
@@ -135,11 +117,74 @@ function calculateMoves() {
         }
     }
 
-    // Sort moves by score (lowest score is better)
     moves.sort((a, b) => a.score - b.score);
     currentMove = 0;
     displayCurrentMove();
 }
+
+
+
+function calculateLookAheadScore(tempBoard) {
+    const pieces = Object.keys(PIECES);
+    let totalBestScore = 0;
+    let piecesEvaluated = 0;
+
+    for (let pieceName of pieces) {
+        const piece = PIECES[pieceName];
+        let bestScoreForPiece = Infinity;
+
+        let maxRotations = pieceName === 'O' ? 1 : pieceName === 'I' || pieceName === 'Z' || pieceName === 'S' ? 2 : 4;
+
+        for (let rotation = 0; rotation < maxRotations; rotation++) {
+            const rotatedPiece = rotatePiece(piece, rotation);
+            const pieceWidth = rotatedPiece[0].length;
+
+            for (let x = 0; x <= 10 - pieceWidth; x++) {
+                const offsetY = getDropHeight(rotatedPiece, x);
+                const lookAheadBoard = tempBoard.map(row => row.slice()); // Copy the board state
+
+                placePieceOnBoard(rotatedPiece, x, offsetY, lookAheadBoard); // Place and clear lines
+
+                const gaps = calculateGapsOnTempBoard(lookAheadBoard);
+                const bumpiness = calculateBumpinessOnTempBoard(lookAheadBoard);
+                const linesCleared = clearFullLinesOnTempBoard(lookAheadBoard);
+                const heightPenalty = calculateHeightPenalty(tempBoard);
+
+                const iDependencies = calculateIDependenciesOnTempBoard(lookAheadBoard);
+
+                const lookAheadMoveScore = (gaps * 1.5 + bumpiness * 0.1 - linesCleared * 0.5 + heightPenalty * 1) + iDependencies * 2.5;
+
+                if (lookAheadMoveScore < bestScoreForPiece) {
+                    bestScoreForPiece = lookAheadMoveScore;
+                }
+            }
+        }
+
+        totalBestScore += bestScoreForPiece;
+        piecesEvaluated++;
+    }
+
+    return totalBestScore / piecesEvaluated;
+}
+
+
+// Helper function to place a piece on a board state (used in look-ahead)
+function placePieceOnBoard(piece, offsetX, offsetY, board) {
+    let linesCleared = 0; // Track lines cleared here
+    piece.forEach((row, y) => {
+        row.forEach((cell, x) => {
+            if (cell === 1) {
+                board[offsetY + y][offsetX + x] = 1;
+            }
+        });
+    });
+
+    // Clear lines and count them
+    linesCleared = clearFullLinesOnTempBoard(board);
+    return linesCleared; // Return the count
+}
+
+
 
 // Helper function to clear full lines on the temporary board and return the count of lines cleared
 function clearFullLinesOnTempBoard(tempBoard) {
@@ -206,12 +251,24 @@ function calculateBumpinessOnTempBoard(tempBoard) {
 
     return bumpiness;
 }
-function calculateheightPenalty(offsetY) {
-    // The higher the piece is placed, the more points it gives
-    // Use a 0.1 multiplier for this bonus
-    const heightPenalty = (20 - offsetY);
-    return heightPenalty;
+function calculateHeightPenalty(board) {
+    let maxHeight = 0;
+
+    // Loop through each column
+    for (let x = 0; x < 10; x++) {
+        // Find the highest block in the column
+        for (let y = 0; y < 20; y++) {
+            if (board[y][x] === 1) {
+                maxHeight = Math.max(maxHeight, 20 - y); // Update maxHeight based on the block's height
+                break; // Stop at the first block in this column
+            }
+        }
+    }
+
+    return maxHeight; // The highest block on the board
 }
+
+
 function calculateIDependenciesOnTempBoard(tempBoard) {
     let iDependencies = 0;
 
@@ -251,10 +308,13 @@ function displayCurrentMove() {
     if (!selectedPiece) return;
     const move = moves[currentMove];
     const rotatedPiece = rotatePiece(selectedPiece, move.rotation);
-    drawPiece(rotatedPiece, move.offsetX, move.offsetY);
+    drawPiece(rotatedPiece, move.offsetX, move.offsetY, true); // Draw as gray (preview)
     currentMoveLabel.textContent = currentMove + 1;
     scoreLabel.textContent = `Score: ${move.score.toFixed(2)} (Gaps: ${move.gaps}, Bumpiness: ${move.bumpiness}, Line Clears: ${move.lineClears}, I-Dependencies: ${move.iDependencies}, Height Penalty: ${move.heightPenalty})`;
 }
+
+
+
 
 
 function getDropHeight(piece, offsetX) {
@@ -306,11 +366,21 @@ function confirmMove() {
 }
 
 function placePiece(piece, offsetX, offsetY) {
-    // Place piece on the board
+    // Save the current board state to the history stack
+    if (historyStack.length >= 50) {
+        historyStack.shift(); // Remove the oldest entry if stack exceeds 50 states
+    }
+    historyStack.push(boardState.map(row => row.slice())); // Save a deep copy
+
+    // Place the piece on the board
     piece.forEach((row, y) => {
         row.forEach((cell, x) => {
             if (cell === 1) {
-                boardState[offsetY + y][offsetX + x] = 1;
+                const index = (offsetY + y) * 10 + (offsetX + x);
+                if (index >= 0 && index < 200) {
+                    boardState[offsetY + y][offsetX + x] = 1;
+                    board.children[index].style.backgroundColor = '#fff'; // Set to white on placement
+                }
             }
         });
     });
@@ -319,6 +389,24 @@ function placePiece(piece, offsetX, offsetY) {
     clearFullLines();
     renderBoard();
 }
+
+function undoMove() {
+    if (historyStack.length > 0) {
+        const lastState = historyStack.pop(); // Retrieve the last saved state
+        for (let y = 0; y < 20; y++) {
+            boardState[y] = lastState[y].slice(); // Deep copy the state back to the board
+        }
+        renderBoard();
+        piecesPlaced = Math.max(0, piecesPlaced - 1); // Decrement pieces placed count
+        document.getElementById('pieces-placed').textContent = piecesPlaced;
+    } else {
+        console.log("No moves to undo!");
+    }
+}
+
+
+
+
 
 function clearFullLines() {
     for (let y = 0; y < 20; y++) {
@@ -364,26 +452,42 @@ let pieceIndex = 0;  // Start with the first piece
 function startRandomMode() {
     clearInterval(randomModeInterval);
 
-    randomModeInterval = setInterval(() => {
-        const letters = Object.keys(PIECES);  // Array of piece names (I, O, T, etc.)
+    // Retrieve PPS from the textbox, defaulting to 2 if empty
+    const pps = parseFloat(document.getElementById("autoplaySpeed").value) || 2;
 
-        // Get the current piece from the array based on pieceIndex
-        const currentPiece = letters[pieceIndex];
+    // Calculate interval in milliseconds
+    const interval = 1000 / pps;
+
+    // Check if the checkbox is checked
+    const randomModeEnabled = document.getElementById("randomModeToggle").checked;
+
+    randomModeInterval = setInterval(() => {
+        const letters = Object.keys(PIECES);
+
+        // Select piece based on toggle
+        let selectedPiece;
+        if (randomModeEnabled) {
+            const randomIndex = Math.floor(Math.random() * letters.length);
+            selectedPiece = letters[randomIndex]; // Select a random piece
+        } else {
+            selectedPiece = letters[pieceIndex];  // Sequential selection
+            pieceIndex = (pieceIndex + 1) % letters.length; // Loop back to 0 if necessary
+        }
 
         // Select the piece and confirm the move
         setTimeout(() => {
-            selectPiece(currentPiece);
-        }, 150);
+            selectPiece(selectedPiece);
+        }, interval / 3);
 
         setTimeout(() => {
             confirmMove();
-        }, 300);
+        }, interval / 1.5);
 
-        // Update pieceIndex to the next piece, looping back to 0 if necessary
-        pieceIndex = (pieceIndex + 1) % letters.length;
-
-    }, 450);  // Time interval between each move
+    }, interval);  // Use the calculated interval based on PPS
 }
+
+
+
 
 function stopRandomMode() {
     clearInterval(randomModeInterval);

@@ -30,12 +30,20 @@
                 <p>Pieces Placed: <span id="pieces-placed">0</span></p>
             </div>
             <button class="confirm-button" onclick="confirmMove()">Confirm Move</button>
+            <button class="confirm-button" onclick="undoMove()">Undo Move</button>
             <label>
                 <input type="checkbox" id="autoPlayMode"> Auto Play Mode
             </label>   
             <label>        
                 <input type="checkbox" id="quickPlace"> Quick Place
             </label>  
+            <label>  
+                <input type="checkbox" id="randomModeToggle"> Random Mode
+            </label> 
+            <label>
+                Autoplay Speed (PPS):
+                <input type="number" id="autoplaySpeed" value="2" min="0.1" step="0.1">
+            </label>
         </div>
     </div>
     <script src="script.js"></script>
