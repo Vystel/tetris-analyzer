@@ -49,44 +49,40 @@ function slidePiece(piece, dropX, dropY, rotation, processedMoves) {
     let offsetX = dropX;
     let offsetY = dropY;
 
-    // Process the original position if not already processed and supported
     const originalMoveKey = `${offsetX},${offsetY},${rotation}`;
     if (!processedMoves.has(originalMoveKey) && isPieceSupported(piece, offsetX, offsetY)) {
         processMove(piece, offsetX, offsetY, rotation);
-        processedMoves.add(originalMoveKey);  // Mark the original position as processed
+        processedMoves.add(originalMoveKey);
     }
 
-    // Check and slide the piece left until collision is detected and it's supported
     while (offsetX > 0 && !checkCollision(piece, offsetX - 1, offsetY)) {
         offsetX--;
         if (isPieceSupported(piece, offsetX, offsetY)) {
             const moveKey = `${offsetX},${offsetY},${rotation}`;
             if (!processedMoves.has(moveKey)) {
                 processMove(piece, offsetX, offsetY, rotation);
-                processedMoves.add(moveKey);  // Mark this move as processed
+                processedMoves.add(moveKey);
             }
         } else {
-            break;  // Stop sliding left if the piece becomes unsupported
+            break;
         }
     }
 
-    // Check and slide the piece right until collision is detected and it's supported
-    offsetX = dropX;  // Reset to the original dropX
+    offsetX = dropX;
     while (offsetX < 10 - piece[0].length && !checkCollision(piece, offsetX + 1, offsetY)) {
         offsetX++;
         if (isPieceSupported(piece, offsetX, offsetY)) {
             const moveKey = `${offsetX},${offsetY},${rotation}`;
             if (!processedMoves.has(moveKey)) {
                 processMove(piece, offsetX, offsetY, rotation);
-                processedMoves.add(moveKey);  // Mark this move as processed
+                processedMoves.add(moveKey);
             }
         } else {
-            break;  // Stop sliding right if the piece becomes unsupported
+            break;
         }
     }
 }
 
-// Helper function to check if the piece is supported (i.e., not floating)
 function isPieceSupported(piece, offsetX, offsetY) {
     for (let y = 0; y < piece.length; y++) {
         for (let x = 0; x < piece[y].length; x++) {

@@ -33,12 +33,13 @@ const PIECE_COLORS = {
 };
 
 // AI evaluation parameter multipliers
-const multipliers = { 
+let multipliers = { 
     gaps: 1.22,
     bumpiness: 0.18,
     lineClears: -0.13,
     heightPenalty: 1.18,
-    iDependencies: 2.58
+    iDependencies: 2.58,
+    quads: 0
 };
 
 const mutationRate = 1; // How much weights can change during evolution mutation

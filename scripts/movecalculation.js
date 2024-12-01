@@ -158,7 +158,7 @@ function calculateBoardScore(board, linesCleared) {
     const iDependencies = calculateIDependenciesOnTempBoard(board);
     
     // Always use currentWeights when auto play is enabled
-    const weights = document.getElementById('autoPlayMode').checked ? currentWeights : multipliers;
+    const weights = /*document.getElementById('autoPlayMode').checked ? currentWeights : */multipliers;
     
     return gaps * weights.gaps + 
            bumpiness * weights.bumpiness + 
