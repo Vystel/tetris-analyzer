@@ -13,7 +13,9 @@ function displayCurrentMove() {
     document.getElementById('line-clears').textContent = move.lineClears;
     document.getElementById('i-dependencies').textContent = move.iDependencies;
     document.getElementById('height-penalty').textContent = move.heightPenalty;
+    document.getElementById('quads').textContent = move.quads !== undefined ? move.quads : "N/A";
 }
+
 
 // Function to update the multiplier value when the textbox is changed
 function updateMultiplier(inputId, multiplierKey) {
@@ -42,6 +44,9 @@ document.getElementById('heightPenaltyInput').addEventListener('input', function
 document.getElementById('iDependenciesInput').addEventListener('input', function() {
     updateMultiplier('iDependenciesInput', 'iDependencies');
 });
+document.getElementById('quadsInput').addEventListener('input', function() {
+    updateMultiplier('quadsInput', 'quads');
+});
 
 // Function to set the multipliers to a preset
 function setPreset(presetName) {
@@ -51,14 +56,16 @@ function setPreset(presetName) {
             bumpiness: 0.18,
             lineClears: -0.13,
             heightPenalty: 1.18,
-            iDependencies: 2.58
+            iDependencies: 2.58,
+            quads: 0
         },
         90: {
-            gaps: 1.5,
-            bumpiness: 0.25,
-            lineClears: -0.2,
-            heightPenalty: 1.5,
-            iDependencies: 2.8
+            gaps: 1,
+            bumpiness: 0.4,
+            lineClears: 2,
+            heightPenalty: 0,
+            iDependencies: 0,
+            quads: -16
         }
     };
 

@@ -42,6 +42,10 @@ function processMove(piece, offsetX, offsetY, rotation) {
     const linesCleared = placePieceOnBoard(piece, offsetX, offsetY, tempBoard);
 
     const moveScore = calculateMoveScore(tempBoard, linesCleared);
+
+    // Determine if the move results in a quad
+    const quads = linesCleared === 4 ? 1 : 0;
+
     moves.push({
         rotation,
         offsetX,
@@ -51,9 +55,11 @@ function processMove(piece, offsetX, offsetY, rotation) {
         bumpiness: calculateBumpinessOnTempBoard(tempBoard),
         lineClears: linesCleared,
         heightPenalty: calculateHeightPenalty(tempBoard),
-        iDependencies: calculateIDependenciesOnTempBoard(tempBoard)
+        iDependencies: calculateIDependenciesOnTempBoard(tempBoard),
+        quads: quads
     });
 }
+
 
 // Calculate the score for a move
 function calculateMoveScore(board, linesCleared) {
@@ -157,15 +163,17 @@ function calculateBoardScore(board, linesCleared) {
     const heightPenalty = calculateHeightPenalty(board);
     const iDependencies = calculateIDependenciesOnTempBoard(board);
     
-    // Always use currentWeights when auto play is enabled
-    const weights = /*document.getElementById('autoPlayMode').checked ? currentWeights : */multipliers;
+    // Check if a quad was cleared
+    const quads = linesCleared === 4 ? 1 : 0;
     
-    return gaps * weights.gaps + 
-           bumpiness * weights.bumpiness + 
-           linesCleared * weights.lineClears + 
-           heightPenalty * weights.heightPenalty + 
-           iDependencies * weights.iDependencies;
+    return gaps * multipliers.gaps + 
+           bumpiness * multipliers.bumpiness + 
+           linesCleared * multipliers.lineClears + 
+           heightPenalty * multipliers.heightPenalty + 
+           iDependencies * multipliers.iDependencies + 
+           quads * multipliers.quads;
 }
+
 
 // Measures height differences between columns
 function calculateBumpinessOnTempBoard(tempBoard) {
