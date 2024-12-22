@@ -19,7 +19,11 @@
 
 body {
     font-family: lexend, sans-serif;
-    background-color: var(--background);
+    background: radial-gradient(
+        circle,
+        #333333,
+        #111111
+    );
     color: var(--text);
     min-height: 100vh;
     display: flex;
@@ -33,9 +37,12 @@ body {
     grid-template-columns: 320px auto 320px;
     gap: 2rem;
     padding: 2rem;
-    background-color: var(--surface);
     border-radius: 1rem;
     box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+
+    background: rgba(13, 13, 13, 0.5);
+    border: 2px solid #222222;
+    border-radius: 16px;
 }
 
 /* Stack veritcally for smaller screens */
@@ -51,9 +58,11 @@ body {
     grid-template-columns: repeat(10, 28px);
     grid-template-rows: repeat(20, 28px);
     gap: 2px;
-    background-color: var(--border);
     padding: 1rem;
-    border-radius: 0.5rem;
+
+    background: rgba(13, 13, 13, 0.5);
+    border: 2px solid #222222;
+    border-radius: 16px;
 }
 
 #board div {
@@ -70,7 +79,10 @@ body {
 .section {
     background-color: var(--background);
     padding: 1rem;
-    border-radius: 0.5rem;
+
+    background: rgba(13, 13, 13, 0.5);
+    border: 2px solid #222222;
+    border-radius: 16px;
 }
 
 .piece-selection {

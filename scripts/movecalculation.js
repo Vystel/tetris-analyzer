@@ -43,9 +43,6 @@ function processMove(piece, offsetX, offsetY, rotation) {
 
     const moveScore = calculateMoveScore(tempBoard, linesCleared);
 
-    // Determine if the move results in a quad
-    const quads = linesCleared === 4 ? 1 : 0;
-
     moves.push({
         rotation,
         offsetX,
@@ -53,12 +50,13 @@ function processMove(piece, offsetX, offsetY, rotation) {
         score: moveScore,
         gaps: calculateGapsOnTempBoard(tempBoard),
         bumpiness: calculateBumpinessOnTempBoard(tempBoard),
-        lineClears: linesCleared,
         heightPenalty: calculateHeightPenalty(tempBoard),
         iDependencies: calculateIDependenciesOnTempBoard(tempBoard),
-        quads: quads
+        linesSent: calculateLinesSent(linesCleared),
+        sideBlocks: checkBlocksOnSides(tempBoard)
     });
 }
+
 
 
 // Calculate the score for a move
@@ -162,18 +160,31 @@ function calculateBoardScore(board, linesCleared) {
     const bumpiness = calculateBumpinessOnTempBoard(board);
     const heightPenalty = calculateHeightPenalty(board);
     const iDependencies = calculateIDependenciesOnTempBoard(board);
-    
-    // Check if a quad was cleared
-    const quads = linesCleared === 4 ? 1 : 0;
-    
+    const sideBlocks = checkBlocksOnSides(board); // Check for blocks on sides
+    const linesSent = calculateLinesSent(linesCleared); // Calculate lines sent based on lines cleared
+
     return gaps * multipliers.gaps + 
            bumpiness * multipliers.bumpiness + 
-           linesCleared * multipliers.lineClears + 
            heightPenalty * multipliers.heightPenalty + 
            iDependencies * multipliers.iDependencies + 
-           quads * multipliers.quads;
+           linesSent * multipliers.linesSent + 
+           sideBlocks * multipliers.sideBlocks; // Incorporate side block penalty
 }
 
+// Calculate how many lines this move would send using TETRIO's line sending system
+function calculateLinesSent(linesCleared) {
+    if (linesCleared === 4) return 4; // Quad
+    if (linesCleared === 3) return 2; // Triple
+    if (linesCleared === 2) return 1; // Double
+    return 0; // Single or no line
+}
+
+// Check for blocks on the left or right side of the board
+function checkBlocksOnSides(board) {
+    const leftSide = board.some(row => row[0] === 1); // Check leftmost column
+    const rightSide = board.some(row => row[9] === 1); // Check rightmost column
+    return (leftSide && rightSide) ? 1 : 0; // Return 1 only if both sides have blocks
+}
 
 // Measures height differences between columns
 function calculateBumpinessOnTempBoard(tempBoard) {

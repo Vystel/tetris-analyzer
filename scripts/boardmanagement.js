@@ -22,13 +22,13 @@ function renderBoard() {
     Array.from(board.children).forEach((cell, index) => {
         const x = index % 10;
         const y = Math.floor(index / 10);
-        cell.style.backgroundColor = boardState[y][x] ? '#fff' : '#444';
+        cell.style.backgroundColor = boardState[y][x] ? '#fff' : '#111';
     });
 }
 
 // Resets all cells to default color
 function clearBoard() {
-    Array.from(board.children).forEach(cell => cell.style.backgroundColor = '#444');
+    Array.from(board.children).forEach(cell => cell.style.backgroundColor = '#111');
 }
 
 // Checks and removes completed lines

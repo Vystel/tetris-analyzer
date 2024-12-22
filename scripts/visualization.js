@@ -10,87 +10,13 @@ function displayCurrentMove() {
     document.getElementById('score').textContent = `${move.score.toFixed(2)}`;
     document.getElementById('gaps').textContent = move.gaps;
     document.getElementById('bumpiness').textContent = move.bumpiness;
-    document.getElementById('line-clears').textContent = move.lineClears;
     document.getElementById('i-dependencies').textContent = move.iDependencies;
     document.getElementById('height-penalty').textContent = move.heightPenalty;
-    document.getElementById('quads').textContent = move.quads !== undefined ? move.quads : "N/A";
+    document.getElementById('lines-sent').textContent = move.linesSent;
+    document.getElementById('side-blocks').textContent = move.sideBlocks;
 }
 
 
-// Function to update the multiplier value when the textbox is changed
-function updateMultiplier(inputId, multiplierKey) {
-    const value = parseFloat(document.getElementById(inputId).value);
-    if (!isNaN(value)) {
-        multipliers[multiplierKey] = value;
-    } else {
-        // If the input is invalid, reset the value to the current multiplier value
-        document.getElementById(inputId).value = multipliers[multiplierKey];
-    }
-}
-
-// Event listeners for textboxes
-document.getElementById('gapsInput').addEventListener('input', function() {
-    updateMultiplier('gapsInput', 'gaps');
-});
-document.getElementById('bumpinessInput').addEventListener('input', function() {
-    updateMultiplier('bumpinessInput', 'bumpiness');
-});
-document.getElementById('lineClearsInput').addEventListener('input', function() {
-    updateMultiplier('lineClearsInput', 'lineClears');
-});
-document.getElementById('heightPenaltyInput').addEventListener('input', function() {
-    updateMultiplier('heightPenaltyInput', 'heightPenalty');
-});
-document.getElementById('iDependenciesInput').addEventListener('input', function() {
-    updateMultiplier('iDependenciesInput', 'iDependencies');
-});
-document.getElementById('quadsInput').addEventListener('input', function() {
-    updateMultiplier('quadsInput', 'quads');
-});
-
-// Function to set the multipliers to a preset
-function setPreset(presetName) {
-    const presets = {
-        koreanStacker: {
-            gaps: 1.22,
-            bumpiness: 0.18,
-            lineClears: -0.13,
-            heightPenalty: 1.18,
-            iDependencies: 2.58,
-            quads: 0
-        },
-        90: {
-            gaps: 1,
-            bumpiness: 0.4,
-            lineClears: 2,
-            heightPenalty: 0,
-            iDependencies: 0,
-            quads: -16
-        }
-    };
-
-    const preset = presets[presetName];
-    for (const key in preset) {
-        multipliers[key] = preset[key];
-        document.getElementById(`${key}Input`).value = preset[key];
-    }
-}
-
-// Event listener for preset dropdown
-document.getElementById('presetSelect').addEventListener('change', function() {
-    const selectedPreset = document.getElementById('presetSelect').value;
-    setPreset(selectedPreset);
-});
-
-// Initialize the UI to the current multipliers
-function initializeUI() {
-    for (const key in multipliers) {
-        document.getElementById(`${key}Input`).value = multipliers[key];
-    }
-}
-
-// Initialize the multipliers on page load
-window.onload = initializeUI;
 
 /*
 // Function to open sorted stats in a raw text view

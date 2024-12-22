@@ -12,8 +12,27 @@
         <!-- Evaluation Info Section -->
         <div class="left-side">
             <div class="section">
+                <h2>Autoplay Controls</h2>
+                <div class="mt-4 space-y-2">
+                    <label>
+                        <input type="checkbox" id="autoPlayMode"> Auto Play Mode
+                    </label>
+                    <label>
+                        <input type="checkbox" id="randomModeToggle"> Random Mode
+                    </label>
+                    <label>
+                        Autoplay Speed (PPS):
+                        <input type="number" id="autoplaySpeed" value="2" min="0.1" step="0.1">
+                    </label>
+                </div>
+            </div>  
+            <div class="section">
                 <h2>Evaluation Info</h2>
                 <div class="stats">
+                    <div class="stat-item">
+                        <span>Pieces Placed:</span>
+                        <span id="pieces-placed">0</span>
+                    </div>
                     <div class="stat-item">
                         <span>Selected Piece:</span>
                         <span id="current-piece">None</span>
@@ -35,10 +54,6 @@
                         <span id="bumpiness">N/A</span>
                     </div>
                     <div class="stat-item">
-                        <span>Line Clears:</span>
-                        <span id="line-clears">N/A</span>
-                    </div>
-                    <div class="stat-item">
                         <span>I-Dependencies:</span>
                         <span id="i-dependencies">N/A</span>
                     </div>
@@ -47,48 +62,16 @@
                         <span id="height-penalty">N/A</span>
                     </div>
                     <div class="stat-item">
-                        <span>Quads:</span>
-                        <span id="quads">N/A</span>
+                        <span>Lines Sent:</span>
+                        <span id="lines-sent">N/A</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Blocks on Sides:</span>
+                        <span id="side-blocks">N/A</span>
                     </div>
                 </div>
-            </div>    
+            </div>  
             
-            <div class="section">
-                <h2>Multiplier Controls</h2>
-                <div class="preset-dropdown">
-                    <label for="presetSelect">Select Preset:</label>
-                    <select id="presetSelect">
-                        <option value="koreanStacker">Korean Stacker</option>
-                        <option value="90">9-0 Stacker</option>
-                    </select>
-                </div>
-                <div class="multiplier-control">
-                    <div class="multiplier-item">
-                        <span>Gaps:</span>
-                        <input type="number" id="gapsInput" value="1.22" class="multiplier-textbox">
-                    </div>
-                    <div class="multiplier-item">
-                        <span>Bumpiness:</span>
-                        <input type="number" id="bumpinessInput" value="0.18" class="multiplier-textbox">
-                    </div>
-                    <div class="multiplier-item">
-                        <span>Line Clears:</span>
-                        <input type="number" id="lineClearsInput" value="-0.13" class="multiplier-textbox">
-                    </div>
-                    <div class="multiplier-item">
-                        <span>Height Penalty:</span>
-                        <input type="number" id="heightPenaltyInput" value="1.18" class="multiplier-textbox">
-                    </div>
-                    <div class="multiplier-item">
-                        <span>I-Dependencies:</span>
-                        <input type="number" id="iDependenciesInput" value="2.58" class="multiplier-textbox">
-                    </div>
-                    <div class="multiplier-item">
-                        <span>Quads:</span>
-                        <input type="number" id="quadsInput" value="0" class="multiplier-textbox">
-                    </div>
-                </div>
-            </div>
 
             
             <!--
@@ -170,18 +153,43 @@
                 </label>
             </div>
             <div class="section">
-                <h2>Autoplay Controls</h2>
-                <div class="mt-4 space-y-2">
-                    <label>
-                        <input type="checkbox" id="autoPlayMode"> Auto Play Mode
-                    </label>
-                    <label>
-                        <input type="checkbox" id="randomModeToggle"> Random Mode
-                    </label>
-                    <label>
-                        Autoplay Speed (PPS):
-                        <input type="number" id="autoplaySpeed" value="2" min="0.1" step="0.1">
-                    </label>
+                <h2>Multiplier Controls</h2>
+                <div class="preset-dropdown">
+                    <label for="presetSelect">Select Preset:</label>
+                    <select id="presetSelect">
+                        <option value="koreanStacker">Korean Stacker</option>
+                        <option value="90">9-0 Stacker</option>
+                    </select>
+                </div>
+                <div class="stats">
+                    <div class="stat-item">
+                        <span>Gaps:</span>
+                        <input type="number" id="gapsInput" value="1.22" class="multiplier-textbox">
+                    </div>
+                    <div class="stat-item">
+                        <span>Bumpiness:</span>
+                        <input type="number" id="bumpinessInput" value="0.18" class="multiplier-textbox">
+                    </div>
+                    <div class="stat-item">
+                        <span>Line Clears:</span>
+                        <input type="number" id="lineClearsInput" value="-0.13" class="multiplier-textbox">
+                    </div>
+                    <div class="stat-item">
+                        <span>Height Penalty:</span>
+                        <input type="number" id="heightPenaltyInput" value="1.18" class="multiplier-textbox">
+                    </div>
+                    <div class="stat-item">
+                        <span>I-Dependencies:</span>
+                        <input type="number" id="iDependenciesInput" value="2.58" class="multiplier-textbox">
+                    </div>
+                    <div class="stat-item">
+                        <span>Lines Sent:</span>
+                        <input type="number" id="linesSentInput" value="0" class="multiplier-textbox">
+                    </div>
+                    <div class="stat-item">
+                        <span>Blocks on Sides:</span>
+                        <input type="number" id="sideBlocksInput" value="0" class="multiplier-textbox">
+                    </div>
                 </div>
             </div>
         </div>

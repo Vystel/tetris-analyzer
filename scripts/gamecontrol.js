@@ -57,3 +57,85 @@ function undoMove() {
         console.log("No moves to undo!");
     }
 }
+
+
+
+// Function to update the multiplier value when the textbox is changed
+function updateMultiplier(inputId, multiplierKey) {
+    const value = parseFloat(document.getElementById(inputId).value);
+    if (!isNaN(value)) {
+        multipliers[multiplierKey] = value;
+    } else {
+        // If the input is invalid, reset the value to the current multiplier value
+        document.getElementById(inputId).value = multipliers[multiplierKey];
+    }
+}
+
+// Event listeners for textboxes
+document.getElementById('gapsInput').addEventListener('input', function() {
+    updateMultiplier('gapsInput', 'gaps');
+});
+document.getElementById('bumpinessInput').addEventListener('input', function() {
+    updateMultiplier('bumpinessInput', 'bumpiness');
+});
+document.getElementById('lineClearsInput').addEventListener('input', function() {
+    updateMultiplier('lineClearsInput', 'lineClears');
+});
+document.getElementById('heightPenaltyInput').addEventListener('input', function() {
+    updateMultiplier('heightPenaltyInput', 'heightPenalty');
+});
+document.getElementById('iDependenciesInput').addEventListener('input', function() {
+    updateMultiplier('iDependenciesInput', 'iDependencies');
+});
+document.getElementById('linesSentInput').addEventListener('input', function() {
+    updateMultiplier('linesSentInput', 'linesSent');
+});
+document.getElementById('sideBlocksInput').addEventListener('input', function() {
+    updateMultiplier('sideBlocksInput', 'sideBlocks');
+});
+
+// Function to set the multipliers to a preset
+function setPreset(presetName) {
+    const presets = {
+        koreanStacker: {
+            gaps: 1.22,
+            bumpiness: 0.18,
+            heightPenalty: 1.18,
+            iDependencies: 2.58,
+            linesSent: 0,
+            sideBlocks: 0
+        },
+        90: {
+            gaps: 4,
+            bumpiness: 0.6,
+            heightPenalty: 1,
+            iDependencies: 4,
+            linesSent: -16,
+            sideBlocks: 8
+        }
+    };
+
+    const preset = presets[presetName];
+    for (const key in preset) {
+        multipliers[key] = preset[key];
+        document.getElementById(`${key}Input`).value = preset[key];
+    }
+}
+
+setPreset("koreanStacker");
+
+// Event listener for preset dropdown
+document.getElementById('presetSelect').addEventListener('change', function() {
+    const selectedPreset = document.getElementById('presetSelect').value;
+    setPreset(selectedPreset);
+});
+
+// Initialize the UI to the current multipliers
+function initializeUI() {
+    for (const key in multipliers) {
+        document.getElementById(`${key}Input`).value = multipliers[key];
+    }
+}
+
+// Initialize the multipliers on page load
+window.onload = initializeUI;
