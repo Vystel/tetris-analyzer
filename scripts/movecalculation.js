@@ -8,23 +8,84 @@ function calculateMoves() {
 }
 
 // Generate all possible moves for the currently selected piece
-function generateMovesForCurrentPiece() {
+async function generateMovesForCurrentPiece() {
     const pieceName = currentPieceLabel.textContent;
     const maxRotations = getMaxRotations(pieceName);
-
-    // Use a set to track processed (offsetX, offsetY, rotation) combinations
     const processedMoves = new Set();
 
+    // Create a queue of moves to process with increasing depth
+    const moveQueue = [];
+
+    // First, generate all initial positions
     for (let rotation = 0; rotation < maxRotations; rotation++) {
         const rotatedPiece = rotatePiece(selectedPiece, rotation);
-
-        // Calculate the drop height for the piece first
+        
         for (let x = 0; x <= 10 - rotatedPiece[0].length; x++) {
             const offsetY = getDropHeight(rotatedPiece, x);
-            if (offsetY < 0) continue; // No valid drop height, skip
+            if (offsetY < 0) continue;
 
-            // Try sliding the piece left or right after calculating its drop height
-            slidePiece(rotatedPiece, x, offsetY, rotation, processedMoves);
+            moveQueue.push({
+                piece: rotatedPiece,
+                x: x,
+                y: offsetY,
+                rotation: rotation,
+                depth: 1,
+                board: copyBoard(boardState)
+            });
+        }
+    }
+
+    // Process moves with increasing depth
+    for (let currentDepth = 1; currentDepth <= lookAheadDepth; currentDepth++) {
+        const depthMoves = moveQueue.filter(move => move.depth === currentDepth);
+        
+        for (const move of depthMoves) {
+            if (currentDepth === 1) {
+                // For depth 1, just process the immediate move
+                const moveKey = `${move.x},${move.y},${move.rotation}`;
+                if (!processedMoves.has(moveKey) && isPieceSupported(move.piece, move.x, move.y)) {
+                    await processDeepMove(move.piece, move.x, move.y, move.rotation, move.board, currentDepth);
+                    processedMoves.add(moveKey);
+                    
+                    // Update display after each base move is processed
+                    moves.sort((a, b) => a.score - b.score);
+                    displayCurrentMove();
+                    
+                    // Add sliding positions for depth 1
+                    await slidePieceAsync(move.piece, move.x, move.y, move.rotation, processedMoves, move.board, currentDepth);
+                }
+            } else {
+                // For deeper moves, explore all possible next pieces
+                const tempBoard = copyBoard(move.board);
+                const linesCleared = placePieceOnBoard(move.piece, move.x, move.y, tempBoard);
+                
+                // Generate next moves for all possible pieces
+                for (const nextPieceName of Object.keys(PIECES)) {
+                    const nextPiece = PIECES[nextPieceName];
+                    const nextMaxRotations = getMaxRotations(nextPieceName);
+                    
+                    for (let nextRotation = 0; nextRotation < nextMaxRotations; nextRotation++) {
+                        const rotatedNextPiece = rotatePiece(nextPiece, nextRotation);
+                        
+                        for (let nextX = 0; nextX <= 10 - rotatedNextPiece[0].length; nextX++) {
+                            const nextY = getDropHeight(rotatedNextPiece, nextX);
+                            if (nextY < 0) continue;
+                            
+                            moveQueue.push({
+                                piece: rotatedNextPiece,
+                                x: nextX,
+                                y: nextY,
+                                rotation: nextRotation,
+                                depth: currentDepth + 1,
+                                board: copyBoard(tempBoard)
+                            });
+                        }
+                    }
+                }
+            }
+            
+            // Add a small delay to allow UI updates
+            await new Promise(resolve => setTimeout(resolve, 0));
         }
     }
 }
@@ -37,17 +98,20 @@ function getMaxRotations(pieceName) {
 }
 
 // Process a single move by simulating the board state
-function processMove(piece, offsetX, offsetY, rotation) {
-    const tempBoard = copyBoard(boardState);
+async function processDeepMove(piece, offsetX, offsetY, rotation, startBoard, depth) {
+    const tempBoard = copyBoard(startBoard);
     const linesCleared = placePieceOnBoard(piece, offsetX, offsetY, tempBoard);
-
-    const moveScore = calculateMoveScore(tempBoard, linesCleared);
-
+    
+    // Calculate immediate score for this move
+    const immediateScore = calculateBoardScore(tempBoard, linesCleared);
+    
+    // Store the move with its score
     moves.push({
         rotation,
         offsetX,
         offsetY,
-        score: moveScore,
+        score: immediateScore,
+        depth: depth,
         gaps: calculateGapsOnTempBoard(tempBoard),
         bumpiness: calculateBumpinessOnTempBoard(tempBoard),
         heightPenalty: calculateHeightPenalty(tempBoard),

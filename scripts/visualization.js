@@ -14,6 +14,7 @@ function displayCurrentMove() {
     document.getElementById('height-penalty').textContent = move.heightPenalty;
     document.getElementById('lines-sent').textContent = move.linesSent;
     document.getElementById('side-blocks').textContent = move.sideBlocks;
+    document.getElementById('current-depth').textContent = `${move.depth}/${lookAheadDepth}`;
 }
 
 

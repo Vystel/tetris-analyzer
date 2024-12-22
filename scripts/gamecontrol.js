@@ -25,7 +25,7 @@ function confirmMove() {
     document.getElementById('pieces-placed').textContent = piecesPlaced;
     console.log('Move confirmed, pieces placed:', piecesPlaced);
 
-    calculateAverageHeightPenalty(); // Log average height penalty after each move
+    //calculateAverageHeightPenalty(); // Log average height penalty after each move
     selectPiece('None');
 }
 

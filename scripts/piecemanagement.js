@@ -45,37 +45,41 @@ function getDropHeight(piece, offsetX) {
 }
 
 // Function to attempt sliding the piece left or right after determining drop height
-function slidePiece(piece, dropX, dropY, rotation, processedMoves) {
+async function slidePieceAsync(piece, dropX, dropY, rotation, processedMoves, startBoard, depth) {
     let offsetX = dropX;
     let offsetY = dropY;
 
-    const originalMoveKey = `${offsetX},${offsetY},${rotation}`;
-    if (!processedMoves.has(originalMoveKey) && isPieceSupported(piece, offsetX, offsetY)) {
-        processMove(piece, offsetX, offsetY, rotation);
-        processedMoves.add(originalMoveKey);
-    }
-
+    // Try sliding left
     while (offsetX > 0 && !checkCollision(piece, offsetX - 1, offsetY)) {
         offsetX--;
         if (isPieceSupported(piece, offsetX, offsetY)) {
             const moveKey = `${offsetX},${offsetY},${rotation}`;
             if (!processedMoves.has(moveKey)) {
-                processMove(piece, offsetX, offsetY, rotation);
+                await processDeepMove(piece, offsetX, offsetY, rotation, startBoard, depth);
                 processedMoves.add(moveKey);
+                
+                // Update display after each move is processed
+                moves.sort((a, b) => a.score - b.score);
+                displayCurrentMove();
             }
         } else {
             break;
         }
     }
 
+    // Reset and try sliding right
     offsetX = dropX;
     while (offsetX < 10 - piece[0].length && !checkCollision(piece, offsetX + 1, offsetY)) {
         offsetX++;
         if (isPieceSupported(piece, offsetX, offsetY)) {
             const moveKey = `${offsetX},${offsetY},${rotation}`;
             if (!processedMoves.has(moveKey)) {
-                processMove(piece, offsetX, offsetY, rotation);
+                await processDeepMove(piece, offsetX, offsetY, rotation, startBoard, depth);
                 processedMoves.add(moveKey);
+                
+                // Update display after each move is processed
+                moves.sort((a, b) => a.score - b.score);
+                displayCurrentMove();
             }
         } else {
             break;
