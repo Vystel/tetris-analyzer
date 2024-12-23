@@ -4,36 +4,6 @@ function calculateMoves() {
     generateMovesForCurrentPiece();
     moves.sort((a, b) => a.score - b.score);
     currentMove = 0;
-    displayCurrentMove();
-}
-
-// Generate all possible moves for the currently selected piece
-function generateMovesForCurrentPiece() {
-    const pieceName = currentPieceLabel.textContent;
-    const maxRotations = getMaxRotations(pieceName);
-
-    // Use a set to track processed (offsetX, offsetY, rotation) combinations
-    const processedMoves = new Set();
-
-    for (let rotation = 0; rotation < maxRotations; rotation++) {
-        const rotatedPiece = rotatePiece(selectedPiece, rotation);
-
-        // Calculate the drop height for the piece first
-        for (let x = 0; x <= 10 - rotatedPiece[0].length; x++) {
-            const offsetY = getDropHeight(rotatedPiece, x);
-            if (offsetY < 0) continue; // No valid drop height, skip
-
-            // Try sliding the piece left or right after calculating its drop height
-            slidePiece(rotatedPiece, x, offsetY, rotation, processedMoves);
-        }
-    }
-}
-
-// Determine the maximum number of rotations for a piece
-function getMaxRotations(pieceName) {
-    if (pieceName === 'O') return 1;
-    if (['I', 'Z', 'S'].includes(pieceName)) return 2;
-    return 4;
 }
 
 // Process a single move by simulating the board state
@@ -57,16 +27,31 @@ function processMove(piece, offsetX, offsetY, rotation) {
     });
 }
 
-
-
 // Calculate the score for a move
 function calculateMoveScore(board, linesCleared) {
     const immediateScore = calculateBoardScore(board, linesCleared);
-    const lookAheadScore = calculateLookAheadScore(board, 1, lookAheadDepth);  // Start with depth 1
+    const lookAheadScore = calculateLookAheadScore(board, 1, depthLimit);  // Start with depth 1
     return (immediateScore + lookAheadScore / 2);
 }
 
-// Evaluates future possible moves based on the given lookAheadDepth
+// Evaluates board state quality
+function calculateBoardScore(board, linesCleared) {
+    const gaps = calculateGapsOnTempBoard(board);
+    const bumpiness = calculateBumpinessOnTempBoard(board);
+    const heightPenalty = calculateHeightPenalty(board);
+    const iDependencies = calculateIDependenciesOnTempBoard(board);
+    const sideBlocks = checkBlocksOnSides(board); // Check for blocks on sides
+    const linesSent = calculateLinesSent(linesCleared); // Calculate lines sent based on lines cleared
+
+    return gaps * multipliers.gaps + 
+           bumpiness * multipliers.bumpiness + 
+           heightPenalty * multipliers.heightPenalty + 
+           iDependencies * multipliers.iDependencies + 
+           linesSent * multipliers.linesSent + 
+           sideBlocks * multipliers.sideBlocks; // Incorporate side block penalty
+}
+
+// Evaluates future possible moves based on the given depthLimit
 function calculateLookAheadScore(tempBoard, currentDepth, maxDepth) {
     if (currentDepth >= maxDepth) {
         return 0; // Stop recursion at max depth
@@ -152,23 +137,6 @@ function clearFullLinesOnTempBoard(tempBoard) {
         }
     }
     return linesCleared;
-}
-
-// Evaluates board state quality
-function calculateBoardScore(board, linesCleared) {
-    const gaps = calculateGapsOnTempBoard(board);
-    const bumpiness = calculateBumpinessOnTempBoard(board);
-    const heightPenalty = calculateHeightPenalty(board);
-    const iDependencies = calculateIDependenciesOnTempBoard(board);
-    const sideBlocks = checkBlocksOnSides(board); // Check for blocks on sides
-    const linesSent = calculateLinesSent(linesCleared); // Calculate lines sent based on lines cleared
-
-    return gaps * multipliers.gaps + 
-           bumpiness * multipliers.bumpiness + 
-           heightPenalty * multipliers.heightPenalty + 
-           iDependencies * multipliers.iDependencies + 
-           linesSent * multipliers.linesSent + 
-           sideBlocks * multipliers.sideBlocks; // Incorporate side block penalty
 }
 
 // Calculate how many lines this move would send using TETRIO's line sending system

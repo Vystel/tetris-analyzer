@@ -4,10 +4,9 @@ const scriptsToLoad = [
 
     'scripts/vars.js',
     'scripts/boardManagement.js',
-    'scripts/pieceManagement.js',
-    'scripts/visualization.js',
-    'scripts/gameControl.js',
-    'scripts/moveCalculation.js',
+    'scripts/findPossibleMoves.js',
+    'scripts/userInterface.js',
+    'scripts/evaluation.js',
     'scripts/autoPlay.js',
     'scripts/evolution.js'
 ];

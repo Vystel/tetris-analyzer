@@ -34,22 +34,60 @@ function clearBoard() {
 // Checks and removes completed lines
 function clearFullLines() {
     for (let y = 0; y < 20; y++) {
-        if (isLineFull(y)) {
-            removeLine(y);
+        if (boardState[y].every((cell) => cell === 1)) {
+            for (let row = y; row > 0; row--) {
+            boardState[row] = boardState[row - 1].slice();
+            }
+            boardState[0] = Array(10).fill(0);
         }
     }
 }
 
-// Checks if a specific row is complete
-function isLineFull(y) {
-    return boardState[y].every(cell => cell === 1);
+// Renders a piece on the board
+function drawPiece(piece, offsetX, offsetY, preview = true) {
+    clearBoard();
+    renderBoard();
+    piece.forEach((row, y) => {
+        row.forEach((cell, x) => {
+            if (cell === 1) {
+                const index = (offsetY + y) * 10 + (offsetX + x);
+                if (index >= 0 && index < 200) {
+                    board.children[index].style.backgroundColor = preview ? '#888' : '#fff';
+                }
+            }
+        });
+    });
 }
 
-// Removes a completed line and shifts above rows down
-function removeLine(y) {
-    for (let row = y; row > 0; row--) {
-        boardState[row] = boardState[row - 1].slice();
+function drawPreview(selectedPiece) {
+    if (!selectedPiece) return;
+    const move = moves[currentMove];
+
+    const rotatedPiece = rotatePiece(selectedPiece, move.rotation);
+    drawPiece(rotatedPiece, move.offsetX, move.offsetY, true); 
+}
+
+// Places a piece permanently on the board
+function placePiece(piece, offsetX, offsetY) {
+
+    if (historyStack.length >= 50) {
+        historyStack.shift(); 
     }
-    boardState[0] = Array(10).fill(0);
-}
 
+    historyStack.push(boardState.map(row => row.slice())); 
+
+    piece.forEach((row, y) => {
+        row.forEach((cell, x) => {
+            if (cell === 1) {
+                const index = (offsetY + y) * 10 + (offsetX + x);
+                if (index >= 0 && index < 200) {
+                    boardState[offsetY + y][offsetX + x] = 1;
+                    board.children[index].style.backgroundColor = '#fff'; 
+                }
+            }
+        });
+    });
+
+    clearFullLines();
+    renderBoard();
+}

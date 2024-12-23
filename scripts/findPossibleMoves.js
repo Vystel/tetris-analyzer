@@ -1,17 +1,30 @@
-// Renders a piece on the board
-function drawPiece(piece, offsetX, offsetY, preview = true) {
-    clearBoard();
-    renderBoard();
-    piece.forEach((row, y) => {
-        row.forEach((cell, x) => {
-            if (cell === 1) {
-                const index = (offsetY + y) * 10 + (offsetX + x);
-                if (index >= 0 && index < 200) {
-                    board.children[index].style.backgroundColor = preview ? '#888' : '#fff';
-                }
-            }
-        });
-    });
+// Generate all possible moves for the currently selected piece
+function generateMovesForCurrentPiece() {
+    const pieceName = currentPieceLabel.textContent;
+    const maxRotations = getMaxRotations(pieceName);
+
+    // Use a set to track processed (offsetX, offsetY, rotation) combinations
+    const processedMoves = new Set();
+
+    for (let rotation = 0; rotation < maxRotations; rotation++) {
+        const rotatedPiece = rotatePiece(selectedPiece, rotation);
+
+        // Calculate the drop height for the piece first
+        for (let x = 0; x <= 10 - rotatedPiece[0].length; x++) {
+            const offsetY = getDropHeight(rotatedPiece, x);
+            if (offsetY < 0) continue; // No valid drop height, skip
+
+            // Try sliding the piece left or right after calculating its drop height
+            slidePiece(rotatedPiece, x, offsetY, rotation, processedMoves);
+        }
+    }
+}
+
+// Determine the maximum number of rotations for a piece
+function getMaxRotations(pieceName) {
+    if (pieceName === 'O') return 1;
+    if (['I', 'Z', 'S'].includes(pieceName)) return 2;
+    return 4;
 }
 
 // Checks if piece placement is valid
@@ -101,30 +114,7 @@ function isPieceSupported(piece, offsetX, offsetY) {
 }
 
 
-// Places a piece permanently on the board
-function placePiece(piece, offsetX, offsetY) {
 
-    if (historyStack.length >= 50) {
-        historyStack.shift(); 
-    }
-
-    historyStack.push(boardState.map(row => row.slice())); 
-
-    piece.forEach((row, y) => {
-        row.forEach((cell, x) => {
-            if (cell === 1) {
-                const index = (offsetY + y) * 10 + (offsetX + x);
-                if (index >= 0 && index < 200) {
-                    boardState[offsetY + y][offsetX + x] = 1;
-                    board.children[index].style.backgroundColor = '#fff'; 
-                }
-            }
-        });
-    });
-
-    clearFullLines();
-    renderBoard();
-}
 
 // Returns a rotated version of the piece
 function rotatePiece(piece, rotation) {
@@ -135,15 +125,3 @@ function rotatePiece(piece, rotation) {
     return rotated;
 }
 
-// Sets the current piece and calculates possible moves
-function selectPiece(pieceName) {
-    selectedPiece = PIECES[pieceName];
-    currentPieceLabel.textContent = pieceName;
-    calculateMoves();
-    displayCurrentMove();
-
-    const quickPlace = document.getElementById('quickPlace').checked;
-    if (quickPlace) {
-        confirmMove();  
-    }
-}

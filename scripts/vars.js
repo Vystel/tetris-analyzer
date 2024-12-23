@@ -6,6 +6,35 @@ const currentMoveLabel = document.getElementById('current-move'); // Display for
 
 const randomModeCheckbox = document.getElementById('autoPlayMode'); // Auto-play mode toggle element
 
+// Event listener for preset dropdown
+document.getElementById('presetSelect').addEventListener('change', function() {
+    const selectedPreset = document.getElementById('presetSelect').value;
+    setPreset(selectedPreset);
+});
+
+// Event listeners for textboxes
+document.getElementById('gapsInput').addEventListener('input', function() {
+    updateMultiplier('gapsInput', 'gaps');
+});
+document.getElementById('bumpinessInput').addEventListener('input', function() {
+    updateMultiplier('bumpinessInput', 'bumpiness');
+});
+document.getElementById('lineClearsInput').addEventListener('input', function() {
+    updateMultiplier('lineClearsInput', 'lineClears');
+});
+document.getElementById('heightPenaltyInput').addEventListener('input', function() {
+    updateMultiplier('heightPenaltyInput', 'heightPenalty');
+});
+document.getElementById('iDependenciesInput').addEventListener('input', function() {
+    updateMultiplier('iDependenciesInput', 'iDependencies');
+});
+document.getElementById('linesSentInput').addEventListener('input', function() {
+    updateMultiplier('linesSentInput', 'linesSent');
+});
+document.getElementById('sideBlocksInput').addEventListener('input', function() {
+    updateMultiplier('sideBlocksInput', 'sideBlocks');
+});
+
 
 
 // ------------------- GAME CONSTANTS ------------------- //
@@ -42,9 +71,28 @@ let multipliers = {
     sideBlocks: 0
 };
 
-const mutationRate = 1; // How much weights can change during evolution mutation
+const presets = {
+    koreanStacker: {
+        gaps: 1.22,
+        bumpiness: 0.18,
+        heightPenalty: 1.18,
+        iDependencies: 2.58,
+        linesSent: 0,
+        sideBlocks: 0
+    },
+    90: {
+        gaps: 4,
+        bumpiness: 0.6,
+        heightPenalty: 1,
+        iDependencies: 4,
+        linesSent: -16,
+        sideBlocks: 8
+    }
+};
 
-let lookAheadDepth = 2;
+let depthLimit = 2;
+
+const mutationRate = 1; // How much weights can change during evolution mutation
 
 //  ------------------- GAME STATE ------------------- //
 
